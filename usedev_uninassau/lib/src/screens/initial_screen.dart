@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:usedev_uninassau/src/models/product_model.dart';
+import 'package:usedev_uninassau/src/services/product_service.dart';
+import 'package:usedev_uninassau/src/widgets/custom_app_bar_widget.dart';
 import 'package:usedev_uninassau/src/widgets/hero_section_widget.dart';
 import 'package:usedev_uninassau/src/widgets/product_card_widget.dart';
 import 'package:usedev_uninassau/src/widgets/subscription_section_widget.dart';
@@ -8,49 +11,90 @@ class InitialScreen extends StatefulWidget {
   const InitialScreen({super.key});
 
   @override
-  _InitialScreenState createState() => _InitialScreenState();
+  State<InitialScreen> createState() => _InitialScreenState();
 }
 
 class _InitialScreenState extends State<InitialScreen> {
+  late Future<List<ProductModel>> _productsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProducts();
+  }
+
+  void _loadProducts() {
+    setState(() {
+      _productsFuture = ProductService().fetchProducts();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        leading: Icon(Icons.menu, size: 40),
-        title: Image.asset('assets/logo_usedev.png', height: 40),
-        centerTitle: true,
-        actions: [
-          Icon(Icons.person_outline, size: 40),
-          SizedBox(width: 10),
-          Icon(Icons.shopping_cart_outlined, size: 40),
-          SizedBox(width: 25),
-        ],
-      ),
+      appBar: const CustomAppBarWidget(),
       body: SingleChildScrollView(
         child: Column(
           spacing: 20,
-          crossAxisAlignment: .stretch,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            HeroSectionWidget(),
+            const HeroSectionWidget(),
             Text(
               'Promos Especiais',
-              textAlign: .center,
+              textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 28,
-                fontWeight: .bold,
+                fontWeight: FontWeight.bold,
                 fontFamily: GoogleFonts.orbitron().fontFamily,
               ),
             ),
-            ListView.builder(
-              shrinkWrap: true,
-              itemCount: 5,
-              itemBuilder: (context, index) => ProductCardWidget(
-                nome: 'Produto 0$index',
-                url: 'https://placehold.co/600x600.png',
-                preco: '10$index,00',
-              ),
+            FutureBuilder<List<ProductModel>>(
+              future: _productsFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Padding(
+                    padding: EdgeInsets.all(40),
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                }
+
+                if (snapshot.hasError) {
+                  return Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      children: [
+                        Text(
+                          snapshot.error
+                              .toString()
+                              .replaceFirst('Exception: ', ''),
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontFamily: GoogleFonts.poppins().fontFamily,
+                            color: Colors.red,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: _loadProducts,
+                          child: const Text('Tentar novamente'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                final products = snapshot.data ?? [];
+
+                return ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: products.length,
+                  itemBuilder: (context, index) =>
+                      ProductCardWidget(product: products[index]),
+                );
+              },
             ),
-            SubscriptionSectionWidget(),
+            const SubscriptionSectionWidget(),
           ],
         ),
       ),
