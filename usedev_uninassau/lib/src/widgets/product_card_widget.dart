@@ -1,50 +1,73 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:usedev_uninassau/src/models/product_model.dart';
+import 'package:usedev_uninassau/src/screens/product_detail_screen.dart';
+import 'package:usedev_uninassau/src/utils/price_formatter.dart';
 
 class ProductCardWidget extends StatelessWidget {
   const ProductCardWidget({
-    required this.nome,
-    required this.url,
-    required this.preco,
+    required this.product,
     super.key,
   });
 
-  final String nome;
-  final String url;
-  final String preco;
+  final ProductModel product;
 
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: .all(20),
+      margin: const EdgeInsets.all(20),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(0)),
       elevation: 5,
-      child: Column(
-        crossAxisAlignment: .stretch,
-        children: [
-          Image.network(url, height: 200, width: double.infinity, fit: .cover),
-          Padding(
-            padding: .symmetric(horizontal: 15, vertical: 10),
-            child: Text(
-              nome,
-              style: TextStyle(
-                fontSize: 25,
-                fontWeight: .bold,
-                fontFamily: GoogleFonts.orbitron().fontFamily,
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute<void>(
+              builder: (context) => ProductDetailScreen(product: product),
+            ),
+          );
+        },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Image.network(
+              product.image,
+              height: 200,
+              width: double.infinity,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) => Container(
+                height: 200,
+                color: Colors.grey.shade200,
+                child: const Icon(Icons.image_not_supported, size: 48),
               ),
             ),
-          ),
-          Padding(
-            padding: .symmetric(horizontal: 15, vertical: 10),
-            child: Text(
-              preco,
-              style: TextStyle(
-                fontSize: 31,
-                fontFamily: GoogleFonts.poppins().fontFamily,
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+              child: Text(
+                product.title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: GoogleFonts.orbitron().fontFamily,
+                ),
               ),
             ),
-          ),
-        ],
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+              child: Text(
+                PriceFormatter.formatBrl(product.price),
+                style: TextStyle(
+                  fontSize: 28,
+                  color: const Color(0xFF7B0BF7),
+                  fontFamily: GoogleFonts.poppins().fontFamily,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
